@@ -1,0 +1,14 @@
+/*全局样式*/
+html, body, #app {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+.el-table {
+    margin-top: 15px;
+    font-size: 12px;
+}
+.el-pagination{
+    margin-top: 15px;
+}
