@@ -3,25 +3,22 @@
     <el-breadcrumb separator="/">
       <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
       <el-breadcrumb-item>
-        <router-link to="/task-management">下发的任务</router-link>
+        <router-link to="/my-task">分配给我的任务</router-link>
       </el-breadcrumb-item>
     </el-breadcrumb>
     <el-card class="box-card">
-      <!-- 搜索新建按钮区域区域 -->
+      <!-- 搜索任务上报按钮区域区域 -->
       <el-row :gutter="20">
         <el-col :span="7">
           <el-input placeholder="请输入任务名称" class="input-with-select" v-model="queryInfo.taskName" clearable
-                    @clear="listTaskManagement">
-            <el-button slot="append" icon="el-icon-search" @click="listTaskManagement"></el-button>
+                    @clear="listMyTasks">
+            <el-button slot="append" icon="el-icon-search" @click="listMyTasks"></el-button>
           </el-input>
         </el-col>
-        <el-col :span.camel="4">
-          <el-button type="primary" @click="dialogVisibleChange">新建任务</el-button>
-        </el-col>
       </el-row>
-      <SaveNewTask></SaveNewTask>
+      <SaveTaskReport></SaveTaskReport>
       <!-- 数据展示区域 -->
-      <el-table border stripe :data="taskManagementList">
+      <el-table border stripe :data="myTaskList">
         <el-table-column type="index"></el-table-column>
         <el-table-column label="任务标题" prop="taskName"></el-table-column>
         <el-table-column label="发起时间" prop="startTime"></el-table-column>
@@ -35,6 +32,13 @@
             <span v-if="scope.row.taskStatus === 1" style="color: #409EFF"> 进行中 </span>
             <span v-if="scope.row.taskStatus === 2" style="color: #67C23A"> 已完成 </span>
             <span v-if="scope.row.taskStatus === 3" style="color: #F56C6C"> 已超时 </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作">
+          <template slot-scope="">
+            <div>
+              <el-link icon="el-icon-edit" type="primary">任务上报</el-link>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -53,56 +57,60 @@
 </template>
 
 <script>
-import SaveNewTask from '@/components/container/SaveNewTask'
-import eventBus from '@/components/eventBus'
+import eventBus from '../components/eventBus'
+import SaveTaskReport from '../components/container/SaveTaskReport'
 
 export default {
-  name: 'TaskManagement',
+  name: 'MyTask',
   data () {
     return {
       dialogVisibleStatus: true,
+      // 我的任务列表查询条件
       queryInfo: {
         pageNum: 1,
         pageSize: 10,
         taskName: '',
+        taskGrade: '',
         reporterId: '',
-        publisherId: window.sessionStorage.getItem('userCode'),
-        isReport: false
+        taskPersonUserId: window.sessionStorage.getItem('userCode')
       },
+      // 人员列表查询条件
       queryInfoUserName: {
         userName: ''
       },
-      leaderUserOptions: [],
-      taskManagementList: [],
-      leaderDepartmentOptions: [],
+      // 我的任务数据列表
+      myTaskList: [],
+      // 人员列表 option 数组
+      userOptions: [],
+      // 部门列表 option 数组
+      departmentOptions: [],
+      // 数据总数
       total: 0
     }
   },
   created () {
     this.getAllUserInfo()
     this.listDepartments()
-    this.listTaskManagement()
+    this.listMyTasks()
     // 接收子组件传递过来的的查询列表的值
     eventBus.$on('sendTaskManagementList', (val) => {
-      this.taskManagementList = val
+      this.myTaskList = val
     })
-    eventBus.$on('leaderUserOptions', (val) => {
-      this.leaderUserOptions = val
+    eventBus.$on('userOptions', (val) => {
+      this.userOptions = val
     })
-    eventBus.$on('leaderDepartmentOptions', (val) => {
-      this.leaderDepartmentOptions = val
+    eventBus.$on('departmentOptions', (val) => {
+      this.departmentOptions = val
     })
   },
   methods: {
-    // 获取部门列表
     async listDepartments () {
       const { data: res } = await this.$http.get('/department/listDepartments')
       if (res.code !== 200) {
         return this.$message.error('获取部门列表列表失败')
       }
-      this.leaderDepartmentOptions = res.data
+      this.departmentOptions = res.data
     },
-    // 获取用户信息
     async getAllUserInfo () {
       const { data: res } = await this.$http.get('/user/getAllUserInfo', {
         params: this.queryInfoUserName
@@ -110,35 +118,35 @@ export default {
       if (res.code !== 200) {
         return this.$message.error('获取人员列表失败')
       }
-      this.leaderUserOptions = res.data
+      this.userOptions = res.data
     },
-    // 获取下发的任务
-    async listTaskManagement () {
-      const { data: res } = await this.$http.get('/task/listTaskManagement', {
+    // 我的任务列表
+    async listMyTasks () {
+      const { data: res } = await this.$http.get('/task/listMyTasks', {
         params: this.queryInfo
       })
       if (res.code !== 200) {
-        return this.$message.error('获取任务管理列表失败')
+        return this.$message.error('获取我的任务管理列表失败')
       }
-      this.taskManagementList = res.data.taskManagementList
+      this.myTaskList = res.data.listMyTasksVOList
       this.total = res.data.total
     },
     handleSizeChange (newPageSize) {
       this.queryInfo.pageSize = newPageSize
-      this.listTaskManagement()
+      this.listMyTasks()
     },
     handleCurrentChange (newPageSize) {
       this.queryInfo.pageNum = newPageSize
-      this.listTaskManagement()
+      this.listMyTasks()
     },
     dialogVisibleChange () {
       eventBus.$emit('sendDialogVisibleStatus', this.dialogVisibleStatus)
-      eventBus.$emit('leaderUserOptions', this.leaderUserOptions)
-      eventBus.$emit('leaderDepartmentOptions', this.leaderDepartmentOptions)
+      eventBus.$emit('userOptions', this.userOptions)
+      eventBus.$emit('departmentOptions', this.departmentOptions)
     }
   },
   components: {
-    SaveNewTask
+    SaveTaskReport
   }
 }
 </script>

@@ -3,7 +3,7 @@
     <el-breadcrumb separator="/">
       <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
       <el-breadcrumb-item>
-        <router-link to="/task-management">下发的任务</router-link>
+        <router-link to="/timeout-task">超时的任务</router-link>
       </el-breadcrumb-item>
     </el-breadcrumb>
     <el-card class="box-card">
@@ -14,9 +14,6 @@
                     @clear="listTaskManagement">
             <el-button slot="append" icon="el-icon-search" @click="listTaskManagement"></el-button>
           </el-input>
-        </el-col>
-        <el-col :span.camel="4">
-          <el-button type="primary" @click="dialogVisibleChange">新建任务</el-button>
         </el-col>
       </el-row>
       <SaveNewTask></SaveNewTask>
@@ -35,6 +32,13 @@
             <span v-if="scope.row.taskStatus === 1" style="color: #409EFF"> 进行中 </span>
             <span v-if="scope.row.taskStatus === 2" style="color: #67C23A"> 已完成 </span>
             <span v-if="scope.row.taskStatus === 3" style="color: #F56C6C"> 已超时 </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" prop="taskStatus">
+          <template slot-scope="">
+            <div>
+              <el-link icon="el-icon-edit" type="primary">重新启用任务</el-link>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -60,14 +64,13 @@ export default {
   name: 'TaskManagement',
   data () {
     return {
+      activeName: 'second',
       dialogVisibleStatus: true,
       queryInfo: {
         pageNum: 1,
         pageSize: 10,
         taskName: '',
-        reporterId: '',
-        publisherId: window.sessionStorage.getItem('userCode'),
-        isReport: false
+        publisherId: window.sessionStorage.getItem('userCode')
       },
       queryInfoUserName: {
         userName: ''
@@ -114,7 +117,7 @@ export default {
     },
     // 获取下发的任务
     async listTaskManagement () {
-      const { data: res } = await this.$http.get('/task/listTaskManagement', {
+      const { data: res } = await this.$http.get('/task/listTimeoutTasks', {
         params: this.queryInfo
       })
       if (res.code !== 200) {

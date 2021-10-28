@@ -17,19 +17,27 @@
           active-text-color="#3C3C3C" router>
           <el-menu-item index="task-management">
             <i class="el-icon-menu"></i>
-            <span slot="title">任务管理</span>
+            <span slot="title">我下发的任务</span>
+          </el-menu-item>
+          <el-menu-item index="report-task">
+            <i class="el-icon-menu"></i>
+            <span slot="title">给我上报的任务</span>
+          </el-menu-item>
+          <el-menu-item index="timeout-task">
+            <i class="el-icon-menu"></i>
+            <span slot="title">超时的任务</span>
           </el-menu-item>
           <el-menu-item index="my-task">
             <i class="el-icon-document"></i>
-            <span slot="title">我的任务</span>
+            <span slot="title">分配给我的任务</span>
+          </el-menu-item>
+          <el-menu-item index="my-report-task">
+            <i class="el-icon-document"></i>
+            <span slot="title">我上报的任务</span>
           </el-menu-item>
           <el-menu-item index="statistics">
             <i class="el-icon-setting"></i>
             <span slot="title">统计</span>
-          </el-menu-item>
-          <el-menu-item index="template">
-            <i class="el-icon-setting"></i>
-            <span slot="title">模板</span>
           </el-menu-item>
         </el-menu>
       </el-aside>
@@ -85,6 +93,6 @@ export default {
 }
 
 .el-main {
-  background-color: #F0F0F0;
+  background-color: #ffffff;
 }
 </style>

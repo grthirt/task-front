@@ -5,13 +5,13 @@
                :visible.sync="dialogVisible"
                width="80%">
       <el-form :model="saveNewTaskData" ref="saveNewTaskRef" label-width="90px" size="medium" :rules="saveNewTaskRules">
-        <!-- 卡片标题 -->
+        <!-- 基础信息卡片标题 -->
         <div class="title-box">
           <div class="title">
             基础信息
           </div>
         </div>
-        <!-- 卡片区域 -->
+        <!-- 基础信息卡片区域 -->
         <el-card class="box-card">
           <el-row>
             <el-col :span="12">
@@ -33,7 +33,7 @@
                 <el-select v-model="saveNewTaskData.leaderDepartmentId" filterable
                            placeholder="请选择" @change="getDepartmentNameByDepartmentCode">
                   <el-option
-                    v-for="(item,index) in leaderDepartmentOptions"
+                    v-for="(item,index) in departmentOptions"
                     :key="index"
                     :label="item.departmentName"
                     :value="item.departmentCode">
@@ -42,13 +42,12 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="牵头人" prop="leaderUserName">
-                <input type="hidden" v-model="saveNewTaskData.leaderUserName">
-                <el-select v-model="saveNewTaskData.leaderUserId" filterable
-                           placeholder="请选择" @change="getUserNameByUserCodeOne"
-                >
+              <el-form-item label="上报领导">
+                <input type="hidden" v-model="saveNewTaskData.publisherName">
+                <el-select v-model="saveNewTaskData.publisherId" filterable
+                           placeholder="请选择" @change="getUserNameByUserCode">
                   <el-option
-                    v-for="(item,index) in leaderUserOptions"
+                    v-for="(item,index) in userOptions"
                     :key="index"
                     :label="item.userName +'【'+ item.departmentName + '】'"
                     :value="item.userCode">
@@ -117,49 +116,7 @@
             </el-col>
           </el-row>
         </el-card>
-        <!-- 卡片标题 -->
-        <div class="title-box">
-          <div class="title">
-            人员任务
-          </div>
-        </div>
-        <!-- 人员任务卡片区域 -->
-        <el-card class="box-card">
-          <el-row v-for="item in saveNewTaskData.taskPersonDTOList" :key="item.userCode">
-            <el-col :span="6">
-              <el-form-item
-                label="参与人">
-                <input type="hidden" v-model="item.userName">
-                <el-select v-model="item.userId" filterable
-                           placeholder="请选择" @change="getUserNameByUserCodeTwo">
-                  <el-option
-                    v-for="(item,index) in leaderUserOptions"
-                    :key="index"
-                    :label="item.userName +'【'+ item.departmentName + '】'"
-                    :value="item.userCode">
-                  </el-option>
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="8">
-              <el-form-item
-                label="任务描述">
-                <el-input v-model="item.taskDescribe"></el-input>
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item
-                label="分配工时">
-                <el-input-number v-model="item.workingHours" :precision="1" :step="0.1" :min="0.2"
-                                 :max="10"></el-input-number>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-form-item>
-            <el-button type="primary" @click="addDomain">增加参与人</el-button>
-          </el-form-item>
-        </el-card>
-        <!-- 卡片标题 -->
+        <!-- 附件卡片标题 -->
         <div class="title-box">
           <div class="title">
             任务附件
@@ -194,10 +151,10 @@
 import eventBus from '../eventBus'
 
 export default {
-
-  name: 'SaveNewTask',
+  name: 'SaveTaskReport',
   data () {
     return {
+      // 添加窗口打开关闭状态
       dialogVisible: false,
       // 上传的文件列表
       fileList: [],
@@ -206,16 +163,18 @@ export default {
         pageNum: 1,
         pageSize: 10,
         taskName: '',
-        reporterId: '',
-        publisherId: window.sessionStorage.getItem('userCode'),
-        isReport: false
+        publisherId: '',
+        reporterId: window.sessionStorage.getItem('userCode'),
+        isReport: true
       },
-      // 添加任务列表参数
+      // 添加任务上报参数
       saveNewTaskData: {
         taskName: '',
         workingHours: 1.0,
-        publisherId: window.sessionStorage.getItem('userCode'),
-        publisherName: window.sessionStorage.getItem('userName'),
+        publisherId: '',
+        publisherName: '',
+        reporterId: window.sessionStorage.getItem('userCode'),
+        reporterName: window.sessionStorage.getItem('userName'),
         leaderDepartmentId: '',
         leaderDepartmentName: '',
         leaderUserId: '',
@@ -225,15 +184,8 @@ export default {
         startTime: '',
         endTime: '',
         taskDetail: '',
-        reportAt: '',
-        taskPersonDTOList: [
-          {
-            userId: '',
-            userName: '',
-            taskDescribe: '',
-            workingHours: ''
-          }
-        ],
+        isReport: true,
+        taskPersonDTOList: [],
         taskAttachmentDTOList: []
       },
       // 表单验证
@@ -261,11 +213,11 @@ export default {
           }
         ],
         // TODO 牵头人必填验证失效
-        leaderUserName: [
+        publisherUserName: [
           {
             required: true,
-            message: '请输入牵头人',
-            trigger: 'blur'
+            message: '请选择上报的领导',
+            trigger: ['blur', 'change']
           }
         ],
         taskType: [
@@ -347,9 +299,12 @@ export default {
         value: 3,
         label: '工程项目'
       }],
-      leaderUserOptions: {},
-      leaderDepartmentOptions: {},
+      // 人员列表 option 数组
+      userOptions: [],
+      // 部门列表 option 数组
+      departmentOptions: [],
       value: '',
+      // 时间选择控制函数
       pickerOptionsStart: {
         disabledDate: time => {
           if (this.saveNewTaskData.endTime
@@ -359,6 +314,7 @@ export default {
           }
         }
       },
+      // 时间选择控制函数
       pickerOptionsEnd: {
         disabledDate: time => {
           if (this.saveNewTaskData.startTime) {
@@ -372,11 +328,11 @@ export default {
     eventBus.$on('sendDialogVisibleStatus', (val) => {
       this.dialogVisible = val
     })
-    eventBus.$on('leaderUserOptions', (val) => {
-      this.leaderUserOptions = val
+    eventBus.$on('userOptions', (val) => {
+      this.userOptions = val
     })
-    eventBus.$on('leaderDepartmentOptions', (val) => {
-      this.leaderDepartmentOptions = val
+    eventBus.$on('departmentOptions', (val) => {
+      this.departmentOptions = val
     })
   },
 
@@ -405,32 +361,23 @@ export default {
       return this.$messageBox.confirm(`确定移除 ${file.name}？`)
     },
     getDepartmentNameByDepartmentCode (val) {
-      this.leaderDepartmentOptions.forEach((item) => {
+      this.departmentOptions.forEach((item) => {
         if (val === item.departmentCode) {
           this.saveNewTaskData.leaderDepartmentName = item.departmentName
         }
       })
     },
-    getUserNameByUserCodeOne (val) {
-      this.leaderUserOptions.forEach((item) => {
+    getUserNameByUserCode (val) {
+      this.userOptions.forEach((item) => {
         if (val === item.userCode) {
-          this.saveNewTaskData.leaderUserName = item.userName
+          this.saveNewTaskData.publisherName = item.userName
+          this.saveNewTaskData.taskPersonDTOList.forEach((items, index) => {
+            this.saveNewTaskData.taskPersonDTOList[index].userName = item.userName
+          })
         }
       })
     },
-    getUserNameByUserCodeTwo (val) {
-      this.leaderUserOptions.forEach((item) => {
-        if (val === item.userCode) {
-          for (let i = 0; i < this.saveNewTaskData.taskPersonDTOList.length; i++) {
-            if (this.saveNewTaskData.taskPersonDTOList[i].userName !== '') {
-              continue
-            }
-            this.saveNewTaskData.taskPersonDTOList[i].userName = item.userName
-          }
-        }
-      })
-    },
-    // 获取下发的任务
+    // 我的任务列表
     async listTaskManagement () {
       const { data: res } = await this.$http.get('/task/listTaskManagement', {
         params: this.queryInfo
@@ -456,20 +403,6 @@ export default {
     // 关闭之后清空表单项
     saveNewTaskClose () {
       this.$refs.saveNewTaskRef.resetFields()
-    },
-    removeDomain (item) {
-      const index = this.dynamicValidateForm.domains.indexOf(item)
-      if (index !== -1) {
-        this.dynamicValidateForm.domains.splice(index, 1)
-      }
-    },
-    addDomain () {
-      this.saveNewTaskData.taskPersonDTOList.push({
-        userId: '',
-        userName: '',
-        taskDescribe: '',
-        workingHours: ''
-      })
     }
   }
 }

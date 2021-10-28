@@ -3,7 +3,7 @@
     <el-breadcrumb separator="/">
       <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
       <el-breadcrumb-item>
-        <router-link to="/task-management">下发的任务</router-link>
+        <router-link to="/report-task">上报的任务</router-link>
       </el-breadcrumb-item>
     </el-breadcrumb>
     <el-card class="box-card">
@@ -15,26 +15,32 @@
             <el-button slot="append" icon="el-icon-search" @click="listTaskManagement"></el-button>
           </el-input>
         </el-col>
-        <el-col :span.camel="4">
-          <el-button type="primary" @click="dialogVisibleChange">新建任务</el-button>
-        </el-col>
       </el-row>
-      <SaveNewTask></SaveNewTask>
       <!-- 数据展示区域 -->
       <el-table border stripe :data="taskManagementList">
         <el-table-column type="index"></el-table-column>
         <el-table-column label="任务标题" prop="taskName"></el-table-column>
-        <el-table-column label="发起时间" prop="startTime"></el-table-column>
-        <el-table-column label="发起人" prop="publisherName"></el-table-column>
-        <el-table-column label="牵头部门" prop="leaderDepartmentName"></el-table-column>
-        <el-table-column label="牵头人" prop="leaderUserName"></el-table-column>
-        <el-table-column label="截至时间" prop="endTime"></el-table-column>
-        <el-table-column label="任务进度" prop="taskProgress"></el-table-column>
-        <el-table-column label="任务状态" prop="taskStatus">
+        <el-table-column label="上报人" prop="reporterName"></el-table-column>
+        <el-table-column label="任务等级" prop="taskGrade">
           <template slot-scope="scope">
-            <span v-if="scope.row.taskStatus === 1" style="color: #409EFF"> 进行中 </span>
-            <span v-if="scope.row.taskStatus === 2" style="color: #67C23A"> 已完成 </span>
-            <span v-if="scope.row.taskStatus === 3" style="color: #F56C6C"> 已超时 </span>
+            <span v-if="scope.row.taskGrade === 1" style="color: #409EFF"> 紧急 </span>
+            <span v-if="scope.row.taskGrade === 2" style="color: #67C23A"> 一般 </span>
+            <span v-if="scope.row.taskGrade === 3" style="color: #F56C6C"> 非紧急 </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="任务类型" prop="taskType">
+          <template slot-scope="scope">
+            <span v-if="scope.row.taskType === 1" style="color: #409EFF"> 日常 </span>
+            <span v-if="scope.row.taskType === 2" style="color: #67C23A"> 会议 </span>
+            <span v-if="scope.row.taskType === 3" style="color: #F56C6C"> 工程 </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="上报时间" prop="reportAt"></el-table-column>
+        <el-table-column label="操作" prop="taskStatus">
+          <template slot-scope="">
+            <div>
+              <el-link icon="el-icon-edit" type="primary">审核并且下发</el-link>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -53,21 +59,19 @@
 </template>
 
 <script>
-import SaveNewTask from '@/components/container/SaveNewTask'
 import eventBus from '@/components/eventBus'
 
 export default {
   name: 'TaskManagement',
   data () {
     return {
-      dialogVisibleStatus: true,
       queryInfo: {
         pageNum: 1,
         pageSize: 10,
         taskName: '',
         reporterId: '',
         publisherId: window.sessionStorage.getItem('userCode'),
-        isReport: false
+        isReport: true
       },
       queryInfoUserName: {
         userName: ''
@@ -136,9 +140,6 @@ export default {
       eventBus.$emit('leaderUserOptions', this.leaderUserOptions)
       eventBus.$emit('leaderDepartmentOptions', this.leaderDepartmentOptions)
     }
-  },
-  components: {
-    SaveNewTask
   }
 }
 </script>

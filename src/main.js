@@ -9,7 +9,6 @@ axios.defaults.baseURL = 'http://localhost:8898'
 axios.defaults.headers.post['Content-Type'] = 'application/json;charset-UTF-8'
 Vue.prototype.$http = axios
 Vue.config.productionTip = false
-
 new Vue({
   router,
   render: h => h(App)
