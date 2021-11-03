@@ -67,7 +67,7 @@ export default {
         taskName: '',
         publisherId: '',
         reporterId: window.sessionStorage.getItem('userCode'),
-        isReport: true
+        isReport: ''
       },
       // 人员列表查询条件
       queryInfoUserName: {

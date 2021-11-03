@@ -37,9 +37,11 @@
         </el-table-column>
         <el-table-column label="上报时间" prop="reportAt"></el-table-column>
         <el-table-column label="操作" prop="taskStatus">
-          <template slot-scope="">
+          <template slot-scope="scope">
             <div>
-              <el-link icon="el-icon-edit" type="primary">审核并且下发</el-link>
+              <el-button icon="el-icon-edit" size="small" type="primary" @click="editReviewAndIssueVisibleChange(scope.row.id)">
+                审核并且下发
+              </el-button>
             </div>
           </template>
         </el-table-column>
@@ -54,6 +56,193 @@
         layout="total, sizes, prev, pager, next, jumper"
         :total=total>
       </el-pagination>
+      <!-- 编辑区域 审核并且下发-->
+      <el-dialog
+        title="提示"
+        :visible.sync="editReviewAndIssueVisible"
+        width="80%" @close="editDialogClosed">
+        <el-form :model="editFormData" ref="editFormDataRef" label-width="90px" size="medium">
+          <!-- 卡片标题 -->
+          <div class="title-box">
+            <div class="title">
+              基础信息
+            </div>
+          </div>
+          <!-- 卡片区域 -->
+          <el-card class="box-card">
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="任务名称" prop="taskName">
+                  <el-input v-model="editFormData.taskName"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="工时" prop="workingHours">
+                  <el-input-number v-model="editFormData.workingHours" :precision="1" :step="0.1" :min="0.2"
+                                   :max="10"></el-input-number>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="牵头部门" prop="leaderDepartmentName">
+                  <input type="hidden" v-model="editFormData.leaderDepartmentName">
+                  <el-select v-model="editFormData.leaderDepartmentId" filterable
+                             placeholder="请选择" @change="getDepartmentNameByDepartmentCode">
+                    <el-option
+                      v-for="(items,index) in leaderDepartmentOptions"
+                      :key="index"
+                      :label="items.departmentName"
+                      :value="items.departmentCode">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="牵头人" prop="leaderUserName">
+                  <input type="hidden" v-model="editFormData.leaderUserName">
+                  <el-select v-model="editFormData.leaderUserId" filterable
+                             placeholder="请选择" @change="getUserNameByUserCodeOne"
+                  >
+                    <el-option
+                      v-for="(item,index) in leaderUserOptions"
+                      :key="index"
+                      :label="item.userName +'【'+ item.departmentName + '】'"
+                      :value="item.userCode">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="任务等级" prop="taskGrade">
+                  <el-select v-model="editFormData.taskGrade" placeholder="请选择任务等级">
+                    <el-option
+                      v-for="item in taskGradeOptions"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="任务类型" prop="taskType">
+                  <el-select v-model="editFormData.taskType" placeholder="请选择任务等级">
+                    <el-option
+                      v-for="item in taskTypeOptions"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="开始日期" prop="startTime">
+                  <el-date-picker
+                    v-model="editFormData.startTime"
+                    type="datetime"
+                    placeholder="选择任务开始日期时间"
+                    default-time="12:00:00"
+                    value-format="yyyy-MM-dd HH:mm:ss"
+                    :picker-options="pickerOptionsStart">
+                  </el-date-picker>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="截至日期" prop="endTime">
+                  <el-date-picker
+                    v-model="editFormData.endTime"
+                    type="datetime"
+                    placeholder="选择任务截至日期时间"
+                    default-time="12:00:00"
+                    value-format="yyyy-MM-dd HH:mm:ss"
+                    :picker-options="pickerOptionsEnd">
+                  </el-date-picker>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="24">
+                <el-form-item label="任务详情" prop="taskDetail">
+                  <el-input type="textarea" v-model="editFormData.taskDetail"></el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-card>
+          <!-- 卡片标题 -->
+          <div class="title-box">
+            <div class="title">
+              人员任务
+            </div>
+          </div>
+          <el-card class="box-card">
+            <el-row v-for="item in editFormData.taskPersonList" :key="item.userCode">
+              <el-col :span="6">
+                <el-form-item
+                  label="参与人">
+                  <input type="hidden" v-model="item.userName">
+                  <el-select v-model="item.userId" filterable
+                             placeholder="请选择" @change="getUserNameByUserCodeTwo">
+                    <el-option
+                      v-for="(item,index) in leaderUserOptions"
+                      :key="index"
+                      :label="item.userName +'【'+ item.departmentName + '】'"
+                      :value="item.userCode">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item
+                  label="任务描述">
+                  <el-input v-model="item.taskDescribe"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="6">
+                <el-form-item
+                  label="分配工时">
+                  <el-input-number v-model="item.workingHours" :precision="1" :step="0.1" :min="0.2"
+                                   :max="10"></el-input-number>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-form-item>
+              <el-button type="primary" @click="addDomain">增加参与人</el-button>
+            </el-form-item>
+          </el-card>
+          <!-- 卡片标题 -->
+          <div class="title-box">
+            <div class="title">
+              任务附件
+            </div>
+          </div>
+          <!-- 任务附件卡片区域 -->
+          <el-card class="box-card">
+            <el-upload
+              name="file"
+              action="http://localhost:8898/file/uploadFile"
+              :on-success="uploadSuccess"
+              :on-remove="handleRemove"
+              :before-remove="beforeRemove"
+              multiple
+              :limit="10"
+              :on-exceed="handleExceed"
+              :file-list="fileList">
+              <el-button size="small" type="primary">点击上传</el-button>
+              <div slot="tip" class="el-upload__tip">上传文件大小不超过3M</div>
+            </el-upload>
+          </el-card>
+        </el-form>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="dialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="editReportTask">确 定</el-button>
+      </span>
+      </el-dialog>
     </el-card>
   </div>
 </template>
@@ -65,21 +254,65 @@ export default {
   name: 'TaskManagement',
   data () {
     return {
+      editReviewAndIssueVisible: false,
       queryInfo: {
         pageNum: 1,
         pageSize: 10,
         taskName: '',
         reporterId: '',
         publisherId: window.sessionStorage.getItem('userCode'),
-        isReport: true
+        isReport: '1'
       },
+      // 上传的文件列表
+      fileList: [],
       queryInfoUserName: {
         userName: ''
       },
       leaderUserOptions: [],
-      taskManagementList: [],
       leaderDepartmentOptions: [],
-      total: 0
+      taskManagementList: [],
+      total: 0,
+      // 编辑的单条数据
+      editFormData: {
+        taskPersonList: [],
+        taskAttachmentList: []
+      },
+      taskGradeOptions: [{
+        value: 1,
+        label: '紧急'
+      }, {
+        value: 2,
+        label: '一般'
+      }, {
+        value: 3,
+        label: '非紧急'
+      }],
+      taskTypeOptions: [{
+        value: 1,
+        label: '会议'
+      }, {
+        value: 2,
+        label: '系统开发'
+      }, {
+        value: 3,
+        label: '工程项目'
+      }],
+      pickerOptionsStart: {
+        disabledDate: time => {
+          if (this.editFormData.endTime
+          ) {
+            return time.getTime() > new Date(this.editFormData.endTime
+            ).getTime()
+          }
+        }
+      },
+      pickerOptionsEnd: {
+        disabledDate: time => {
+          if (this.editFormData.startTime) {
+            return time.getTime() < new Date(this.editFormData.startTime).getTime() - 86400000
+          }
+        }
+      }
     }
   },
   created () {
@@ -116,7 +349,7 @@ export default {
       }
       this.leaderUserOptions = res.data
     },
-    // 获取下发的任务
+    // 获取下发的任务列表
     async listTaskManagement () {
       const { data: res } = await this.$http.get('/task/listTaskManagement', {
         params: this.queryInfo
@@ -135,10 +368,91 @@ export default {
       this.queryInfo.pageNum = newPageSize
       this.listTaskManagement()
     },
-    dialogVisibleChange () {
-      eventBus.$emit('sendDialogVisibleStatus', this.dialogVisibleStatus)
-      eventBus.$emit('leaderUserOptions', this.leaderUserOptions)
-      eventBus.$emit('leaderDepartmentOptions', this.leaderDepartmentOptions)
+    // 获取单条数据
+    editReviewAndIssueVisibleChange (id) {
+      this.$http.get('/task/getTask/' + id).then((res) => {
+        this.editFormData = res.data.data
+        this.editFormData.isReport = false
+      })
+      this.editReviewAndIssueVisible = true
+    },
+    // 关闭弹框清空表单内容
+    editDialogClosed () {
+      this.$refs.editFormDataRef.resetFields()
+    },
+
+    editReportTask () {
+      this.$refs.editFormDataRef.validate(async validate => {
+        if (!validate) return
+        // 发起修改请求
+        const { data: res } = await this.$http.put('/task/updateTask/', this.editFormData
+        )
+        if (res.code !== 200) {
+          return this.$message.error('修改失败')
+        }
+        // 关闭对话框
+        this.editReviewAndIssueVisible = false
+        // 刷新数据列表
+        await this.listTaskManagement()
+        this.$message.success('更新数据成功')
+      })
+    },
+    getDepartmentNameByDepartmentCode (val) {
+      this.leaderDepartmentOptions.forEach((item) => {
+        if (val === item.departmentCode) {
+          this.editFormData.leaderDepartmentName = item.departmentName
+        }
+      })
+    },
+    getUserNameByUserCodeOne (val) {
+      this.leaderUserOptions.forEach((item) => {
+        if (val === item.userCode) {
+          this.editFormData.leaderUserName = item.userName
+        }
+      })
+    },
+    getUserNameByUserCodeTwo (val) {
+      this.leaderUserOptions.forEach((item) => {
+        if (val === item.userCode) {
+          for (let i = 0; i < this.editFormData.taskPersonList.length; i++) {
+            if (this.editFormData.taskPersonList[i].userName !== '') {
+              continue
+            }
+            this.editFormData.taskPersonList[i].userName = item.userName
+          }
+        }
+      })
+    },
+    addDomain () {
+      this.editFormData.taskPersonList.push({
+        userId: '',
+        userName: '',
+        taskDescribe: '',
+        workingHours: ''
+      })
+    },
+    uploadSuccess (response) {
+      // 上传成功之后需要把上传成功的id，集合到一个数组中
+      this.editFormData.taskAttachmentList.push({
+        uploadFileId: response.data.uploadFileId
+      })
+    },
+    handleExceed (files, fileList) {
+      this.$message.warning(`当前限制选择 10 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`)
+    },
+    beforeRemove (file) {
+      return this.$messageBox.confirm(`确定移除 ${file.name}？`)
+    },
+    async handleRemove (file) {
+      // 调用删除接口，删除数据库数据
+      const { data: res } = await this.$http.delete('/file/removeUploadFile', {
+        params: {
+          id: file.response.data.uploadFileId
+        }
+      })
+      if (res.code !== 200) {
+        return this.$message.error('附件删除失败')
+      }
     }
   }
 }
@@ -149,4 +463,22 @@ export default {
   margin-top: 15px;
   font-size: 12px;
 }
+
+.title-box {
+  display: flex;
+  height: 40px;
+  margin-bottom: 15px;
+  border-bottom: solid 4px #00CCCC;
+
+  .title {
+    color: white;
+    background-color: #00CCCC;
+    width: 100px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
 </style>

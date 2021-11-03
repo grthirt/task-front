@@ -125,7 +125,7 @@
         </div>
         <!-- 人员任务卡片区域 -->
         <el-card class="box-card">
-          <el-row v-for="item in saveNewTaskData.taskPersonDTOList" :key="item.userCode">
+          <el-row v-for="item in saveNewTaskData.taskPersonList" :key="item.userCode">
             <el-col :span="6">
               <el-form-item
                 label="参与人">
@@ -226,7 +226,7 @@ export default {
         endTime: '',
         taskDetail: '',
         reportAt: '',
-        taskPersonDTOList: [
+        taskPersonList: [
           {
             userId: '',
             userName: '',
@@ -234,7 +234,7 @@ export default {
             workingHours: ''
           }
         ],
-        taskAttachmentDTOList: []
+        taskAttachmentList: []
       },
       // 表单验证
       saveNewTaskRules: {
@@ -383,7 +383,7 @@ export default {
   methods: {
     uploadSuccess (response) {
       // 上传成功之后需要把上传成功的id，集合到一个数组中
-      this.saveNewTaskData.taskAttachmentDTOList.push({
+      this.saveNewTaskData.taskAttachmentList.push({
         uploadFileId: response.data.uploadFileId
       })
     },
@@ -421,11 +421,11 @@ export default {
     getUserNameByUserCodeTwo (val) {
       this.leaderUserOptions.forEach((item) => {
         if (val === item.userCode) {
-          for (let i = 0; i < this.saveNewTaskData.taskPersonDTOList.length; i++) {
-            if (this.saveNewTaskData.taskPersonDTOList[i].userName !== '') {
+          for (let i = 0; i < this.saveNewTaskData.taskPersonList.length; i++) {
+            if (this.saveNewTaskData.taskPersonList[i].userName !== '') {
               continue
             }
-            this.saveNewTaskData.taskPersonDTOList[i].userName = item.userName
+            this.saveNewTaskData.taskPersonList[i].userName = item.userName
           }
         }
       })
@@ -464,7 +464,7 @@ export default {
       }
     },
     addDomain () {
-      this.saveNewTaskData.taskPersonDTOList.push({
+      this.saveNewTaskData.taskPersonList.push({
         userId: '',
         userName: '',
         taskDescribe: '',

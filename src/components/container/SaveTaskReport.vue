@@ -185,8 +185,8 @@ export default {
         endTime: '',
         taskDetail: '',
         isReport: true,
-        taskPersonDTOList: [],
-        taskAttachmentDTOList: []
+        taskPersonList: [],
+        taskAttachmentList: []
       },
       // 表单验证
       saveNewTaskRules: {
@@ -339,7 +339,7 @@ export default {
   methods: {
     uploadSuccess (response) {
       // 上传成功之后需要把上传成功的id，集合到一个数组中
-      this.saveNewTaskData.taskAttachmentDTOList.push({
+      this.saveNewTaskData.taskAttachmentList.push({
         uploadFileId: response.data.uploadFileId
       })
     },
@@ -371,8 +371,8 @@ export default {
       this.userOptions.forEach((item) => {
         if (val === item.userCode) {
           this.saveNewTaskData.publisherName = item.userName
-          this.saveNewTaskData.taskPersonDTOList.forEach((items, index) => {
-            this.saveNewTaskData.taskPersonDTOList[index].userName = item.userName
+          this.saveNewTaskData.taskPersonList.forEach((items, index) => {
+            this.saveNewTaskData.taskPersonList[index].userName = item.userName
           })
         }
       })

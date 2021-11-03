@@ -16,7 +16,6 @@
           </el-input>
         </el-col>
       </el-row>
-      <SaveTaskReport></SaveTaskReport>
       <!-- 数据展示区域 -->
       <el-table border stripe :data="myTaskList">
         <el-table-column type="index"></el-table-column>
@@ -35,9 +34,11 @@
           </template>
         </el-table-column>
         <el-table-column label="操作">
-          <template slot-scope="">
+          <template slot-scope="scope">
             <div>
-              <el-link icon="el-icon-edit" type="primary">任务上报</el-link>
+              <el-button icon="el-icon-edit" type="primary" size="small" @click="editMyTaskVisibleChange(scope.row.id)">
+                任务汇报
+              </el-button>
             </div>
           </template>
         </el-table-column>
@@ -52,18 +53,253 @@
         layout="total, sizes, prev, pager, next, jumper"
         :total=total>
       </el-pagination>
+      <!-- 编辑区域 任务汇报-->
+      <el-dialog
+        :visible.sync="editMyTaskVisible"
+        width="80%" @close="editDialogClosed">
+        <el-form :model="editFormData" ref="saveTaskReportFormDataRef" label-width="90px" size="medium">
+          <!-- 卡片标题 -->
+          <div class="title-box">
+            <div class="title">
+              基础信息
+            </div>
+          </div>
+          <!-- 卡片区域 -->
+          <el-card class="box-card">
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="任务名称" prop="taskName">
+                  <el-input disabled v-model="editFormData.taskName"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="工时" prop="workingHours">
+                  <el-input-number disabled v-model="editFormData.workingHours" :precision="1" :step="0.1" :min="0.2"
+                                   :max="10"></el-input-number>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="牵头部门" prop="leaderDepartmentName">
+                  <input type="hidden" v-model="editFormData.leaderDepartmentName">
+                  <el-select disabled v-model="editFormData.leaderDepartmentId" filterable
+                             placeholder="请选择">
+                    <el-option
+                      v-for="(items,index) in departmentOptions"
+                      :key="index"
+                      :label="items.departmentName"
+                      :value="items.departmentCode">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="牵头人" prop="leaderUserName">
+                  <input type="hidden" v-model="editFormData.leaderUserName">
+                  <el-select disabled v-model="editFormData.leaderUserId" filterable
+                             placeholder="请选择">
+                    <el-option
+                      v-for="(item,index) in userOptions"
+                      :key="index"
+                      :label="item.userName +'【'+ item.departmentName + '】'"
+                      :value="item.userCode">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="任务等级" prop="taskGrade">
+                  <el-select disabled v-model="editFormData.taskGrade" placeholder="请选择任务等级">
+                    <el-option
+                      v-for="item in taskGradeOptions"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="任务类型" prop="taskType">
+                  <el-select disabled v-model="editFormData.taskType" placeholder="请选择任务等级">
+                    <el-option
+                      v-for="item in taskTypeOptions"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="开始日期" prop="startTime">
+                  <el-date-picker
+                    disabled
+                    v-model="editFormData.startTime"
+                    type="datetime"
+                    placeholder="选择任务开始日期时间"
+                    default-time="12:00:00"
+                    value-format="yyyy-MM-dd HH:mm:ss">
+                  </el-date-picker>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="截至日期" prop="endTime">
+                  <el-date-picker
+                    disabled
+                    v-model="editFormData.endTime"
+                    type="datetime"
+                    placeholder="选择任务截至日期时间"
+                    default-time="12:00:00"
+                    value-format="yyyy-MM-dd HH:mm:ss">
+                  </el-date-picker>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="24">
+                <el-form-item label="任务详情" prop="taskDetail">
+                  <el-input type="textarea" disabled v-model="editFormData.taskDetail"></el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-card>
+          <!-- 卡片标题 汇报记录 -->
+          <div class="title-box">
+            <div class="title">
+              汇报记录
+            </div>
+          </div>
+          <el-card class="box-card">
+            <el-table
+              border
+              :data="taskReportList"
+              style="width: 100%">
+              <el-table-column type="index"></el-table-column>
+              <el-table-column
+                prop="reporterName"
+                label="汇报人"
+                width="180">
+              </el-table-column>
+              <el-table-column
+                prop="reportTime"
+                label="汇报时间">
+              </el-table-column>
+              <el-table-column
+                prop="taskProgress"
+                label="任务进度">
+              </el-table-column>
+              <el-table-column
+                prop="taskDescription"
+                label="汇报内容">
+              </el-table-column>
+              <el-table-column label="附件">
+                <template slot-scope="scope">
+                  <div v-for="(item,index) in scope.row.taskReportAttachmentList" :key="index">
+                    {{ item.fileName }}
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-card>
+          <!-- 卡片标题 进行汇报 -->
+          <div class="title-box">
+            <div class="title">
+              任务汇报
+            </div>
+          </div>
+          <el-card class="box-card">
+            <el-row>
+              <el-col :span="4">
+                <el-form-item label="汇报人">
+                  <el-input type="text" v-model="taskReportRequestData.reporterName"/>
+                </el-form-item>
+              </el-col>
+              <el-col :span="11">
+                <el-form-item
+                  label="任务描述">
+                  <el-input v-model="taskReportRequestData.taskDescription"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="任务进度">
+                  <el-slider v-model="taskReportRequestData.taskProgress"
+                             :format-tooltip="formatTooltip"
+                             :marks="marks"></el-slider>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-card>
+          <!-- 卡片标题 -->
+          <div class="title-box">
+            <div class="title">
+              任务附件
+            </div>
+          </div>
+          <!-- 任务附件卡片区域 -->
+          <el-card class="box-card">
+            <el-upload
+              name="file"
+              action="http://localhost:8898/file/uploadFile"
+              :on-success="uploadSuccess"
+              :on-remove="handleRemove"
+              :before-remove="beforeRemove"
+              multiple
+              :limit="10"
+              :on-exceed="handleExceed"
+              :file-list="fileList">
+              <el-button size="small" type="primary">点击上传</el-button>
+              <div slot="tip" class="el-upload__tip">上传文件大小不超过3M</div>
+            </el-upload>
+          </el-card>
+        </el-form>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="editMyTaskVisible = false">关 闭</el-button>
+          <el-button type="primary" @click="saveTaskReport">确认汇报</el-button>
+      </span>
+      </el-dialog>
     </el-card>
   </div>
 </template>
 
 <script>
 import eventBus from '../components/eventBus'
-import SaveTaskReport from '../components/container/SaveTaskReport'
 
 export default {
   name: 'MyTask',
   data () {
     return {
+      marks: {
+        25: {
+          style: {
+            color: '#1989FA'
+          },
+          label: this.$createElement('strong', '25%')
+        },
+        50: {
+          style: {
+            color: '#1989FA'
+          },
+          label: this.$createElement('strong', '50%')
+        },
+        75: {
+          style: {
+            color: '#1989FA'
+          },
+          label: this.$createElement('strong', '75%')
+        }
+      },
+      tableData: [{
+        date: '2016-05-02',
+        name: '王小虎',
+        address: '上海市普陀区金沙江路 1518 弄'
+      }],
+      editMyTaskVisible: false,
       dialogVisibleStatus: true,
       // 我的任务列表查询条件
       queryInfo: {
@@ -85,7 +321,41 @@ export default {
       // 部门列表 option 数组
       departmentOptions: [],
       // 数据总数
-      total: 0
+      total: 0,
+      // 上传的文件列表
+      fileList: [],
+      // 我汇报记录列表
+      taskReportList: [],
+      // 任务汇报的请求列表
+      taskReportRequestData: {
+        taskId: '',
+        reporterId: window.sessionStorage.getItem('userCode'),
+        reporterName: window.sessionStorage.getItem('userName'),
+        taskProgress: 0,
+        taskDescription: '',
+        taskReportAttachmentList: []
+      },
+      editFormData: {},
+      taskGradeOptions: [{
+        value: 1,
+        label: '紧急'
+      }, {
+        value: 2,
+        label: '一般'
+      }, {
+        value: 3,
+        label: '非紧急'
+      }],
+      taskTypeOptions: [{
+        value: 1,
+        label: '会议'
+      }, {
+        value: 2,
+        label: '系统开发'
+      }, {
+        value: 3,
+        label: '工程项目'
+      }]
     }
   },
   created () {
@@ -104,6 +374,12 @@ export default {
     })
   },
   methods: {
+    uploadSuccess (response) {
+      // 上传成功之后需要把上传成功的id，集合到一个数组中
+      this.taskReportRequestData.taskReportAttachmentList.push({
+        uploadFileId: response.data.uploadFileId
+      })
+    },
     async listDepartments () {
       const { data: res } = await this.$http.get('/department/listDepartments')
       if (res.code !== 200) {
@@ -139,14 +415,71 @@ export default {
       this.queryInfo.pageNum = newPageSize
       this.listMyTasks()
     },
+    async handleRemove (file) {
+      // 调用删除接口，删除数据库数据
+      const { data: res } = await this.$http.delete('/file/removeUploadFile', {
+        params: {
+          id: file.response.data.uploadFileId
+        }
+      })
+      if (res.code !== 200) {
+        return this.$message.error('附件删除失败')
+      }
+    },
+    handleExceed (files, fileList) {
+      this.$message.warning(`当前限制选择 10 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`)
+    },
+    beforeRemove (file) {
+      return this.$messageBox.confirm(`确定移除 ${file.name}？`)
+    },
     dialogVisibleChange () {
       eventBus.$emit('sendDialogVisibleStatus', this.dialogVisibleStatus)
       eventBus.$emit('userOptions', this.userOptions)
       eventBus.$emit('departmentOptions', this.departmentOptions)
+    },
+    editMyTaskVisibleChange (id) {
+      this.$http.get('/task/getTask/' + id).then((res) => {
+        this.editFormData = res.data.data
+      })
+      this.taskReportRequestData.taskId = id
+      this.editMyTaskVisible = true
+      this.listTaskReport(id)
+    },
+    // 关闭弹框清空表单内容
+    editDialogClosed () {
+      this.$refs.saveTaskReportFormDataRef.resetFields()
+    },
+    // 任务汇报保存
+    saveTaskReport () {
+      this.$refs.saveTaskReportFormDataRef.validate(async valid => {
+        const { data: res } = await this.$http.post('/task/saveTaskReport', this.taskReportRequestData)
+        if (res.code !== 200) {
+          this.$message.error('汇报失败')
+        }
+        this.$message.success('汇报成功')
+        await this.listTaskReport(this.taskReportRequestData.taskId)
+        this.$refs.saveTaskReportFormDataRef.resetFields()
+        this.editMyTaskVisible = true
+      })
+    },
+    async listTaskReport (taskId) {
+      const { data: res } = await this.$http.get('/task/getTaskReport', {
+        params: {
+          taskId: taskId,
+          reporterId: window.sessionStorage.getItem('userCode')
+        }
+      })
+      if (res.code !== 200) {
+        return this.$message.error('失败')
+      }
+      this.taskReportList = res.data
+    },
+    formatTooltip (val) {
+      return val + '%'
+    },
+    sliderChange (val) {
+      this.taskReportRequestData.taskProgress = val / 100
     }
-  },
-  components: {
-    SaveTaskReport
   }
 }
 </script>
@@ -154,6 +487,58 @@ export default {
 <style lang="less" scoped>
 .el-card {
   margin-top: 15px;
+  margin-bottom: 15px;
   font-size: 12px;
 }
+
+.title-box {
+  display: flex;
+  height: 40px;
+  margin-bottom: 15px;
+  border-bottom: solid 4px #00CCCC;
+
+  .title {
+    color: white;
+    background-color: #00CCCC;
+    width: 100px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+.table {
+  table-layout: fixed;
+  border-collapse: collapse;
+  border: none;
+  width: 100%;
+
+  td {
+    height: 40px;
+    border: 1px solid #c7c3c3;
+    text-align: center;
+  }
+}
+
+.table :nth-last-child(3) {
+  width: 400px;
+}
+
+.table :nth-last-child(4) {
+  width: 100px;
+}
+
+.table :nth-last-child(5) {
+  width: 250px;
+}
+
+.table :nth-last-child(6) {
+  width: 100px;
+}
+
+.table :nth-last-child(7) {
+  width: 100px;
+}
+
 </style>

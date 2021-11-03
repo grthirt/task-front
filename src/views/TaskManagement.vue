@@ -67,7 +67,7 @@ export default {
         taskName: '',
         reporterId: '',
         publisherId: window.sessionStorage.getItem('userCode'),
-        isReport: false
+        isReport: '0'
       },
       queryInfoUserName: {
         userName: ''

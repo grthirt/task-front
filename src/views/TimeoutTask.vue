@@ -16,7 +16,6 @@
           </el-input>
         </el-col>
       </el-row>
-      <SaveNewTask></SaveNewTask>
       <!-- 数据展示区域 -->
       <el-table border stripe :data="taskManagementList">
         <el-table-column type="index"></el-table-column>
@@ -35,9 +34,12 @@
           </template>
         </el-table-column>
         <el-table-column label="操作" prop="taskStatus">
-          <template slot-scope="">
+          <template slot-scope="scope">
             <div>
-              <el-link icon="el-icon-edit" type="primary">重新启用任务</el-link>
+              <el-button icon="el-icon-edit" type="primary" size="small"
+                         @click="editTimeoutVisibleChange(scope.row.id)">
+                重新启用任务
+              </el-button>
             </div>
           </template>
         </el-table-column>
@@ -52,18 +54,65 @@
         layout="total, sizes, prev, pager, next, jumper"
         :total=total>
       </el-pagination>
+      <!-- 编辑区域 重新启用任务-->
+      <el-dialog
+        :visible.sync="editTimeoutVisible"
+        width="40%" @close="editDialogClosed">
+        <el-form :model="editFormData" ref="editFormDataRef" label-width="90px" size="medium">
+          <!-- 卡片标题 -->
+          <div class="title-box">
+            <div class="title">
+              基础信息
+            </div>
+          </div>
+          <!-- 卡片区域 -->
+          <el-card class="box-card">
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="开始日期">
+                  <el-date-picker
+                    v-model="editFormData.startTime"
+                    type="datetime"
+                    placeholder="选择任务开始日期时间"
+                    default-time="12:00:00"
+                    value-format="yyyy-MM-dd HH:mm:ss"
+                    :picker-options="pickerOptionsStart">
+                  </el-date-picker>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="截至日期">
+                  <el-date-picker
+                    v-model="editFormData.endTime"
+                    type="datetime"
+                    placeholder="选择任务截至日期时间"
+                    default-time="12:00:00"
+                    value-format="yyyy-MM-dd HH:mm:ss"
+                    :picker-options="pickerOptionsEnd">
+                  </el-date-picker>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-card>
+        </el-form>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="dialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="editReportTask">确 定</el-button>
+      </span>
+      </el-dialog>
     </el-card>
   </div>
 </template>
 
 <script>
-import SaveNewTask from '@/components/container/SaveNewTask'
 import eventBus from '@/components/eventBus'
 
 export default {
   name: 'TaskManagement',
   data () {
     return {
+      editFormData: {},
+      editTimeoutVisible: false,
       activeName: 'second',
       dialogVisibleStatus: true,
       queryInfo: {
@@ -72,18 +121,27 @@ export default {
         taskName: '',
         publisherId: window.sessionStorage.getItem('userCode')
       },
-      queryInfoUserName: {
-        userName: ''
-      },
-      leaderUserOptions: [],
       taskManagementList: [],
-      leaderDepartmentOptions: [],
-      total: 0
+      total: 0,
+      pickerOptionsStart: {
+        disabledDate: time => {
+          if (this.editFormData.endTime
+          ) {
+            return time.getTime() > new Date(this.editFormData.endTime
+            ).getTime()
+          }
+        }
+      },
+      pickerOptionsEnd: {
+        disabledDate: time => {
+          if (this.editFormData.startTime) {
+            return time.getTime() < new Date(this.editFormData.startTime).getTime() - 86400000
+          }
+        }
+      }
     }
   },
   created () {
-    this.getAllUserInfo()
-    this.listDepartments()
     this.listTaskManagement()
     // 接收子组件传递过来的的查询列表的值
     eventBus.$on('sendTaskManagementList', (val) => {
@@ -97,24 +155,6 @@ export default {
     })
   },
   methods: {
-    // 获取部门列表
-    async listDepartments () {
-      const { data: res } = await this.$http.get('/department/listDepartments')
-      if (res.code !== 200) {
-        return this.$message.error('获取部门列表列表失败')
-      }
-      this.leaderDepartmentOptions = res.data
-    },
-    // 获取用户信息
-    async getAllUserInfo () {
-      const { data: res } = await this.$http.get('/user/getAllUserInfo', {
-        params: this.queryInfoUserName
-      })
-      if (res.code !== 200) {
-        return this.$message.error('获取人员列表失败')
-      }
-      this.leaderUserOptions = res.data
-    },
     // 获取下发的任务
     async listTaskManagement () {
       const { data: res } = await this.$http.get('/task/listTimeoutTasks', {
@@ -138,10 +178,33 @@ export default {
       eventBus.$emit('sendDialogVisibleStatus', this.dialogVisibleStatus)
       eventBus.$emit('leaderUserOptions', this.leaderUserOptions)
       eventBus.$emit('leaderDepartmentOptions', this.leaderDepartmentOptions)
+    },
+    // 关闭弹框清空表单内容
+    editDialogClosed () {
+      this.$refs.editFormDataRef.resetFields()
+    },
+    async editTimeoutVisibleChange (id) {
+      const { data: res } = await this.$http.get('/task/getTask/' + id)
+      this.editFormData = res.data
+      this.editFormData.taskStatus = 1
+      this.editTimeoutVisible = true
+    },
+    editReportTask () {
+      this.$refs.editFormDataRef.validate(async validate => {
+        if (!validate) return
+        // 发起修改请求
+        const { data: res } = await this.$http.put('/task/updateTask/', this.editFormData
+        )
+        if (res.code !== 200) {
+          return this.$message.error('修改失败')
+        }
+        // 关闭对话框
+        // 刷新数据列表
+        await this.listTaskManagement()
+        this.$message.success('任务重新启用成功')
+        this.editTimeoutVisible = false
+      })
     }
-  },
-  components: {
-    SaveNewTask
   }
 }
 </script>
@@ -150,5 +213,22 @@ export default {
 .el-card {
   margin-top: 15px;
   font-size: 12px;
+}
+
+.title-box {
+  display: flex;
+  height: 40px;
+  margin-bottom: 15px;
+  border-bottom: solid 4px #00CCCC;
+
+  .title {
+    color: white;
+    background-color: #00CCCC;
+    width: 100px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
 }
 </style>
