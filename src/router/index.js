@@ -1,24 +1,30 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import Login from '../components/Login'
+// import Login from '../components/Login'
+import Index from '../components/Index'
 import Home from '../components/Home'
 import TaskManagement from '../views/TaskManagement'
 import MyTask from '../views/MyTask'
-import Statistics from '../views/Statistics'
 import ReportTask from '../views/ReportTask'
 import TimeoutTask from '../views/TimeoutTask'
 import MyReportTask from '../views/MyReportTask'
+import Report from '../components/report/Report'
 
 Vue.use(VueRouter)
 
 const routes = [
+
   {
     path: '/',
     redirect: '/home'
   },
   {
     path: '/login',
-    component: Login
+    component: Index
+  },
+  {
+    path: '/test',
+    component: Index
   },
   {
     path: '/home',
@@ -40,19 +46,20 @@ const routes = [
       component: TimeoutTask
     }, {
       path: '/statistics',
-      component: Statistics
+      component: Report
     }
     ]
   }
 ]
 
 const router = new VueRouter({
-  routes
+  routes,
+  mode: 'history'
 })
 
 // 挂载路由导航守卫
 router.beforeEach((to, from, next) => {
-  if (to.path === '/login') return next()
+  if (to.path === '/login' || to.path === '/test') return next()
   const token = window.sessionStorage.getItem('token')
   if (!token) return next('/login')
   next()

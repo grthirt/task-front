@@ -1,7 +1,7 @@
 <template>
   <el-header>
     <div>
-      <img src="../../assets/logo.jpg" alt="">
+      <img src="../../assets/logo1.png" alt="">
       <span>任务分发反馈系统</span>
     </div>
     <div>
@@ -18,7 +18,7 @@ export default {
 
 <style lang="less" scoped>
 .el-header {
-  background-color: #2b4b6b;
+  background-color: #0e76de;
   display: flex;
   justify-content: space-between;
   padding-left: 0;

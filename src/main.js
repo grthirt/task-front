@@ -5,7 +5,7 @@ import './plugins/element.js'
 import '@/assets/css/global.css'
 import axios from 'axios'
 
-axios.defaults.baseURL = 'http://localhost:8898'
+axios.defaults.baseURL = process.env.VUE_APP_BASE_API
 axios.defaults.headers.post['Content-Type'] = 'application/json;charset-UTF-8'
 Vue.prototype.$http = axios
 Vue.config.productionTip = false

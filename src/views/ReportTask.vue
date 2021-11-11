@@ -39,7 +39,8 @@
         <el-table-column label="操作" prop="taskStatus">
           <template slot-scope="scope">
             <div>
-              <el-button icon="el-icon-edit" size="small" type="primary" @click="editReviewAndIssueVisibleChange(scope.row.id)">
+              <el-button icon="el-icon-edit" size="small" type="primary"
+                         @click="editReviewAndIssueVisibleChange(scope.row.id)">
                 审核并且下发
               </el-button>
             </div>
@@ -61,7 +62,7 @@
         title="提示"
         :visible.sync="editReviewAndIssueVisible"
         width="80%" @close="editDialogClosed">
-        <el-form :model="editFormData" ref="editFormDataRef" label-width="90px" size="medium">
+        <el-form :model="editFormData" ref="editFormDataRef" label-width="90px" size="medium" :rules="saveNewTaskRules">
           <!-- 卡片标题 -->
           <div class="title-box">
             <div class="title">
@@ -167,9 +168,16 @@
               </el-col>
             </el-row>
             <el-row>
-              <el-col :span="24">
+              <el-col :span="12">
                 <el-form-item label="任务详情" prop="taskDetail">
                   <el-input type="textarea" v-model="editFormData.taskDetail"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="任务附件" prop="taskDetail">
+                  <el-link v-for="(item,index) in editFormData.taskAttachmentList" :key="index"
+                           @click="downFile(item.newFileName)">{{ item.fileName }}
+                  </el-link>
                 </el-form-item>
               </el-col>
             </el-row>
@@ -254,6 +262,90 @@ export default {
   name: 'TaskManagement',
   data () {
     return {
+      // 表单验证
+      saveNewTaskRules: {
+        taskName: [
+          {
+            required: true,
+            message: '请输入任务名称',
+            trigger: 'blur'
+          }
+        ],
+        workingHours: [
+          {
+            required: true,
+            message: '请输入工时',
+            trigger: 'blur'
+          }
+        ],
+        // TODO 牵头部门必填验证失效
+        leaderDepartmentName: [
+          {
+            required: true,
+            message: '请输入牵头部门',
+            trigger: ['blur', 'change']
+          }
+        ],
+        // TODO 牵头人必填验证失效
+        leaderUserName: [
+          {
+            required: true,
+            message: '请选择牵头人',
+            trigger: ['blur', 'change']
+          }
+        ],
+        taskType: [
+          {
+            required: true,
+            message: '请选择任务类型',
+            trigger: 'blur'
+          }
+        ],
+        taskGrade: [
+          {
+            required: true,
+            message: '请选择任务等级',
+            trigger: 'blur'
+          }
+        ],
+        startTime: [
+          {
+            required: true,
+            message: '请输入任务开始时间',
+            trigger: 'blur'
+          }
+        ],
+        endTime: [
+          {
+            required: true,
+            message: '请输入任务截至时间',
+            trigger: 'blur'
+          }
+        ],
+        taskDetail: [
+          {
+            required: true,
+            message: '请输入任务详情',
+            trigger: 'blur'
+          }
+        ],
+        // TODO 参与人必填验证失效
+        taskPerson: [
+          {
+            required: true,
+            message: '请选择参与人',
+            trigger: 'blur'
+          }
+        ],
+        // TODO 验证失效
+        taskDescribe: [
+          {
+            required: true,
+            message: '请输入任务描述',
+            trigger: 'blur'
+          }
+        ]
+      },
       editReviewAndIssueVisible: false,
       queryInfo: {
         pageNum: 1,
@@ -453,6 +545,36 @@ export default {
       if (res.code !== 200) {
         return this.$message.error('附件删除失败')
       }
+    },
+    downFile (fileName) {
+      this.$http({
+        method: 'get',
+        url: '/file/downloadFile/',
+        params: {
+          fileName: fileName
+        },
+        responseType: 'arraybuffer'
+      })
+        .then(res => {
+          console.log(res)
+          this.download(res.data, fileName)
+        })
+        .catch(req => {
+          console.log('下载失败', req)
+        })
+    },
+    // 下载文件
+    download (data, fileName) {
+      if (!data) {
+        return
+      }
+      const url = window.URL.createObjectURL(new Blob([data]))
+      const link = document.createElement('a')
+      link.style.display = 'none'
+      link.href = url
+      link.setAttribute('download', fileName)
+      document.body.appendChild(link)
+      link.click()
     }
   }
 }

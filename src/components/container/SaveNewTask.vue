@@ -443,14 +443,16 @@ export default {
     },
     saveNewTask () {
       this.$refs.saveNewTaskRef.validate(async valid => {
-        const { data: res } = await this.$http.post('/task/saveTask', this.saveNewTaskData)
-        if (res.code !== 200) {
-          this.$message.error('添加失败')
+        if (valid) {
+          const { data: res } = await this.$http.post('/task/saveTask', this.saveNewTaskData)
+          if (res.code !== 200) {
+            this.$message.error('添加失败')
+          }
+          this.$message.success('添加成功')
+          this.dialogVisible = false
+          await this.listTaskManagement()
+          eventBus.$emit('sendTaskManagementList', this.taskManagementList)
         }
-        this.$message.success('添加成功')
-        this.dialogVisible = false
-        await this.listTaskManagement()
-        eventBus.$emit('sendTaskManagementList', this.taskManagementList)
       })
     },
     // 关闭之后清空表单项

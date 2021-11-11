@@ -20,9 +20,8 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="工时" prop="workingHours">
-                <el-input-number v-model="saveNewTaskData.workingHours" :precision="1" :step="0.1" :min="0.2"
-                                 :max="10"></el-input-number>
+              <el-form-item label="任务详情" prop="taskDetail">
+                <el-input v-model="saveNewTaskData.taskDetail"></el-input>
               </el-form-item>
             </el-col>
           </el-row>
@@ -42,7 +41,7 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="上报领导">
+              <el-form-item label="上报领导" prop="publisherUserName">
                 <input type="hidden" v-model="saveNewTaskData.publisherName">
                 <el-select v-model="saveNewTaskData.publisherId" filterable
                            placeholder="请选择" @change="getUserNameByUserCode">
@@ -110,9 +109,7 @@
           </el-row>
           <el-row>
             <el-col :span="24">
-              <el-form-item label="任务详情" prop="taskDetail">
-                <el-input type="textarea" v-model="saveNewTaskData.taskDetail"></el-input>
-              </el-form-item>
+
             </el-col>
           </el-row>
         </el-card>
@@ -165,12 +162,12 @@ export default {
         taskName: '',
         publisherId: '',
         reporterId: window.sessionStorage.getItem('userCode'),
-        isReport: true
+        isReport: '1'
       },
       // 添加任务上报参数
       saveNewTaskData: {
         taskName: '',
-        workingHours: 1.0,
+        workingHours: '',
         publisherId: '',
         publisherName: '',
         reporterId: window.sessionStorage.getItem('userCode'),
@@ -204,7 +201,6 @@ export default {
             trigger: 'blur'
           }
         ],
-        // TODO 牵头部门必填验证失效
         leaderDepartmentName: [
           {
             required: true,
@@ -212,7 +208,6 @@ export default {
             trigger: ['blur', 'change']
           }
         ],
-        // TODO 牵头人必填验证失效
         publisherUserName: [
           {
             required: true,
@@ -390,14 +385,16 @@ export default {
     },
     saveNewTask () {
       this.$refs.saveNewTaskRef.validate(async valid => {
-        const { data: res } = await this.$http.post('/task/saveTask', this.saveNewTaskData)
-        if (res.code !== 200) {
-          this.$message.error('添加失败')
+        if (valid) {
+          const { data: res } = await this.$http.post('/task/saveTask', this.saveNewTaskData)
+          if (res.code !== 200) {
+            this.$message.error('添加失败')
+          }
+          this.$message.success('添加成功')
+          this.dialogVisible = false
+          await this.listTaskManagement()
+          eventBus.$emit('sendTaskManagementList', this.taskManagementList)
         }
-        this.$message.success('添加成功')
-        this.dialogVisible = false
-        await this.listTaskManagement()
-        eventBus.$emit('sendTaskManagementList', this.taskManagementList)
       })
     },
     // 关闭之后清空表单项

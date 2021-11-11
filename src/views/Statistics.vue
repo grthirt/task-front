@@ -1,31 +1,19 @@
 <template>
   <div>
-    <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
-      <el-tab-pane label="用户管理" name="first">用户管理</el-tab-pane>
-      <el-tab-pane label="配置管理" name="second">配置管理</el-tab-pane>
-      <el-tab-pane label="角色管理" name="third">角色管理</el-tab-pane>
-      <el-tab-pane label="定时任务补偿" name="fourth">定时任务补偿</el-tab-pane>
-    </el-tabs>
+    <h1>该功能还在建设中。。。</h1>
   </div>
 </template>
 
 <script>
 
 export default {
-  name: 'TaskManagement',
-  data () {
-    return {
-      activeName: 'first'
-    }
-  },
-  methods: {
-    handleClick (tab, event) {
-      console.log(tab, event)
-    }
-  }
+  name: 'TaskManagement'
 }
 </script>
 
 <style lang="less" scoped>
-
+div {
+  font-size: 50px;
+  text-align: center;
+}
 </style>

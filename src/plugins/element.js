@@ -65,4 +65,5 @@ Vue.use(TabPane)
 Vue.use(Link)
 Vue.use(Slider)
 Vue.prototype.$message = Message
+Vue.prototype.$confirm = MessageBox.confirm
 Vue.prototype.$messageBox = MessageBox

@@ -25,12 +25,12 @@
         <el-table-column label="牵头部门" prop="leaderDepartmentName"></el-table-column>
         <el-table-column label="牵头人" prop="leaderUserName"></el-table-column>
         <el-table-column label="截至时间" prop="endTime"></el-table-column>
+        <el-table-column label="我的工时" prop="workingHours"></el-table-column>
         <el-table-column label="任务进度" prop="taskProgress"></el-table-column>
         <el-table-column label="任务状态" prop="taskStatus">
           <template slot-scope="scope">
-            <span v-if="scope.row.taskStatus === 1" style="color: #409EFF"> 进行中 </span>
-            <span v-if="scope.row.taskStatus === 2" style="color: #67C23A"> 已完成 </span>
-            <span v-if="scope.row.taskStatus === 3" style="color: #F56C6C"> 已超时 </span>
+            <span v-if="scope.row.taskProgress === '100%'" style="color: #409EFF"> 已完成 </span>
+            <span v-if="scope.row.taskProgress !== '100%'" style="color: #67C23A"> 进行中 </span>
           </template>
         </el-table-column>
         <el-table-column label="操作">
@@ -57,7 +57,8 @@
       <el-dialog
         :visible.sync="editMyTaskVisible"
         width="80%" @close="editDialogClosed">
-        <el-form :model="editFormData" ref="saveTaskReportFormDataRef" label-width="90px" size="medium">
+        <el-form :model="editFormData" ref="editTaskReportFormDataRef" label-width="90px" size="medium"
+                 :rules="saveNewTaskRules">
           <!-- 卡片标题 -->
           <div class="title-box">
             <div class="title">
@@ -162,9 +163,16 @@
               </el-col>
             </el-row>
             <el-row>
-              <el-col :span="24">
+              <el-col :span="12">
                 <el-form-item label="任务详情" prop="taskDetail">
                   <el-input type="textarea" disabled v-model="editFormData.taskDetail"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="任务附件" prop="taskDetail">
+                  <el-link v-for="(item,index) in editFormData.taskAttachmentList" :key="index"
+                           @click="downFile(item.newFileName)">{{ item.fileName }}
+                  </el-link>
                 </el-form-item>
               </el-col>
             </el-row>
@@ -202,6 +210,18 @@
                 <template slot-scope="scope">
                   <div v-for="(item,index) in scope.row.taskReportAttachmentList" :key="index">
                     {{ item.fileName }}
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column
+                prop="taskProgress"
+                label="操作">
+                <template slot-scope="scope">
+                  <div>
+                    <el-button icon="el-icon-edit" type="primary" size="small"
+                               @click="deleteTaskReport(scope.row.id,scope.row.taskId)">
+                      删除汇报记录
+                    </el-button>
                   </div>
                 </template>
               </el-table-column>
@@ -274,6 +294,7 @@ export default {
   name: 'MyTask',
   data () {
     return {
+      saveNewTaskRules: {},
       marks: {
         25: {
           style: {
@@ -294,11 +315,6 @@ export default {
           label: this.$createElement('strong', '75%')
         }
       },
-      tableData: [{
-        date: '2016-05-02',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1518 弄'
-      }],
       editMyTaskVisible: false,
       dialogVisibleStatus: true,
       // 我的任务列表查询条件
@@ -445,21 +461,25 @@ export default {
       this.editMyTaskVisible = true
       this.listTaskReport(id)
     },
-    // 关闭弹框清空表单内容
-    editDialogClosed () {
-      this.$refs.saveTaskReportFormDataRef.resetFields()
-    },
+
     // 任务汇报保存
     saveTaskReport () {
-      this.$refs.saveTaskReportFormDataRef.validate(async valid => {
+      this.$refs.editTaskReportFormDataRef.validate(async valid => {
+        if (!valid) return
         const { data: res } = await this.$http.post('/task/saveTaskReport', this.taskReportRequestData)
         if (res.code !== 200) {
           this.$message.error('汇报失败')
         }
         this.$message.success('汇报成功')
         await this.listTaskReport(this.taskReportRequestData.taskId)
-        this.$refs.saveTaskReportFormDataRef.resetFields()
+        this.$refs.editTaskReportFormDataRef.resetFields()
         this.editMyTaskVisible = true
+        // this.taskReportRequestData.taskId = ''
+        // this.taskReportRequestData.reporterId = ''
+        // this.taskReportRequestData.reporterName = ''
+        // this.taskReportRequestData.taskProgress = ''
+        // this.taskReportRequestData.taskDescription = ''
+        // this.taskReportRequestData.taskReportAttachmentList = {}
       })
     },
     async listTaskReport (taskId) {
@@ -477,8 +497,58 @@ export default {
     formatTooltip (val) {
       return val + '%'
     },
-    sliderChange (val) {
-      this.taskReportRequestData.taskProgress = val / 100
+    editDialogClosed () {
+      this.$refs.editTaskReportFormDataRef.resetFields()
+    },
+    async deleteTaskReport (id, taskId) {
+      const confirmResult = await this.$confirm('将永久删除, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).catch(error => error)
+      console.log(confirmResult)
+      if (confirmResult === 'cancel') {
+        this.$message.info('已经取消了删除')
+      }
+      const { data: res } = await this.$http.delete('/task/deleteTaskReport/' + id)
+      if (res.code !== 200) {
+        return this.$message.error('删除失败')
+      }
+      this.$message.success('删除成功')
+      // 更新记录
+      await this.listTaskReport(taskId)
+      // 更新外层列表
+      await this.listMyTasks()
+    },
+    downFile (fileName) {
+      this.$http({
+        method: 'get',
+        url: '/file/downloadFile/',
+        params: {
+          fileName: fileName
+        },
+        responseType: 'arraybuffer'
+      })
+        .then(res => {
+          console.log(res)
+          this.download(res.data, fileName)
+        })
+        .catch(req => {
+          console.log('下载失败', req)
+        })
+    },
+    // 下载文件
+    download (data, fileName) {
+      if (!data) {
+        return
+      }
+      const url = window.URL.createObjectURL(new Blob([data]))
+      const link = document.createElement('a')
+      link.style.display = 'none'
+      link.href = url
+      link.setAttribute('download', fileName)
+      document.body.appendChild(link)
+      link.click()
     }
   }
 }
