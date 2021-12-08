@@ -26,7 +26,11 @@
         <el-table-column label="牵头人" prop="leaderUserName"></el-table-column>
         <el-table-column label="截至时间" prop="endTime"></el-table-column>
         <el-table-column label="我的工时" prop="workingHours"></el-table-column>
-        <el-table-column label="任务进度" prop="taskProgress"></el-table-column>
+        <el-table-column label="任务进度">
+          <template slot-scope="scope">
+            <el-progress :percentage="scope.row.taskProgress" :color="colors"></el-progress>
+          </template>
+        </el-table-column>
         <el-table-column label="任务状态" prop="taskStatus">
           <template slot-scope="scope">
             <span v-if="scope.row.taskProgress === '100%'" style="color: #409EFF"> 已完成 </span>
@@ -36,7 +40,8 @@
         <el-table-column label="操作">
           <template slot-scope="scope">
             <div>
-              <el-button icon="el-icon-edit" type="primary" size="small" @click="editMyTaskVisibleChange(scope.row.id)">
+              <el-button icon="el-icon-edit" type="primary" size="small"
+                         @click="editMyTaskVisibleChange(scope.row.id)">
                 任务汇报
               </el-button>
             </div>
@@ -57,7 +62,8 @@
       <el-dialog
         :visible.sync="editMyTaskVisible"
         width="80%" @close="editDialogClosed">
-        <el-form :model="editFormData" ref="editTaskReportFormDataRef" label-width="90px" size="medium"
+        <el-form :model="editFormData" ref="editTaskReportFormDataRef" label-width="90px"
+                 size="medium"
                  :rules="saveNewTaskRules">
           <!-- 卡片标题 -->
           <div class="title-box">
@@ -75,7 +81,8 @@
               </el-col>
               <el-col :span="12">
                 <el-form-item label="工时" prop="workingHours">
-                  <el-input-number disabled v-model="editFormData.workingHours" :precision="1" :step="0.1" :min="0.2"
+                  <el-input-number disabled v-model="editFormData.workingHours" :precision="1"
+                                   :step="0.1" :min="0.2"
                                    :max="10"></el-input-number>
                 </el-form-item>
               </el-col>
@@ -199,8 +206,11 @@
                 label="汇报时间">
               </el-table-column>
               <el-table-column
-                prop="taskProgress"
                 label="任务进度">
+                <template slot-scope="scope">
+                  <el-progress :percentage="scope.row.taskProgress"
+                               :color="colors"></el-progress>
+                </template>
               </el-table-column>
               <el-table-column
                 prop="taskDescription"
@@ -294,6 +304,28 @@ export default {
   name: 'MyTask',
   data () {
     return {
+      colors: [
+        {
+          color: '#f56c6c',
+          percentage: 20
+        },
+        {
+          color: '#e6a23c',
+          percentage: 40
+        },
+        {
+          color: '#5cb87a',
+          percentage: 60
+        },
+        {
+          color: '#1989fa',
+          percentage: 80
+        },
+        {
+          color: '#6f7ad3',
+          percentage: 100
+        }
+      ],
       saveNewTaskRules: {},
       marks: {
         25: {

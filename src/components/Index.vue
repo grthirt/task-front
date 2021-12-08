@@ -13,6 +13,14 @@ export default {
     this.getUserInfo()
   },
   methods: {
+    addPreZero (num) {
+      const t = (num + '').length
+      let s = ''
+      for (let i = 0; i < 4 - t; i++) {
+        s += '0'
+      }
+      return s + num
+    },
     async getUserInfo () {
       this.loginId = this.$route.query.name
       if (this.loginId !== undefined) {
@@ -28,7 +36,8 @@ export default {
           return this.$message.error('登录失败')
         }
         window.sessionStorage.setItem('token', 'Authorization: Bearer token')
-        window.sessionStorage.setItem('userCode', res.data.id)
+
+        window.sessionStorage.setItem('userCode', this.addPreZero(res.data.id))
         window.sessionStorage.setItem('userName', res.data.name)
         await this.$router.push('/home')
       } else {

@@ -42,6 +42,7 @@
               <i class="el-icon-user-solid"></i>
               <span>我的任务</span>
             </template>
+
             <el-menu-item index="my-task">
               <i class="el-icon-menu"></i>
               <span slot="title">分配给我的任务</span>
@@ -77,6 +78,11 @@ export default {
 </script>
 
 <style lang="less" scoped>
+.item {
+  margin-top: 10px;
+  margin-right: 40px;
+}
+
 .el-container {
   height: 100%;
 }

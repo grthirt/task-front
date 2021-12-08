@@ -7,7 +7,7 @@
       </el-breadcrumb-item>
     </el-breadcrumb>
     <el-card class="box-card">
-      <el-form label-width="90px" size="medium">
+      <el-form label-width="90px" size="medium" :rules="reportRules">
         <el-row>
           <el-col :span="5">
             <el-form-item label="选择部门">
@@ -22,24 +22,26 @@
             </el-form-item>
           </el-col>
           <el-col :span="5">
-            <el-form-item label="开始日期" prop="startTime">
+            <el-form-item label="开始日期">
               <el-date-picker
-                readonly
+                v-model="saveNewTaskData.startTime"
                 type="datetime"
                 placeholder="选择任务开始日期时间"
                 default-time="12:00:00"
-                value-format="yyyy-MM-dd HH:mm:ss">
+                value-format="yyyy-MM-dd HH:mm:ss"
+                :picker-options="pickerOptionsStart">
               </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="5">
-            <el-form-item label="截至日期" prop="endTime">
+            <el-form-item label="截至日期">
               <el-date-picker
-                readonly
+                v-model="saveNewTaskData.endTime"
                 type="datetime"
                 placeholder="选择任务截至日期时间"
                 default-time="12:00:00"
-                value-format="yyyy-MM-dd HH:mm:ss">
+                value-format="yyyy-MM-dd HH:mm:ss"
+                :picker-options="pickerOptionsEnd">
               </el-date-picker>
             </el-form-item>
           </el-col>
@@ -62,6 +64,26 @@ export default {
   name: 'Report',
   data () {
     return {
+      reportRules: {
+        startTime: [
+          {
+            required: true,
+            message: '请输入任务开始时间',
+            trigger: 'blur'
+          }
+        ],
+        endTime: [
+          {
+            required: true,
+            message: '请输入任务截至时间',
+            trigger: 'blur'
+          }
+        ]
+      },
+      saveNewTaskData: {
+        startTime: '',
+        endTime: ''
+      },
       // 部门列表 option 数组
       departmentOptions: [],
       pickerOptionsStart: {

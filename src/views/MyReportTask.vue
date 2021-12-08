@@ -29,7 +29,11 @@
         <el-table-column label="牵头部门" prop="leaderDepartmentName"></el-table-column>
         <el-table-column label="牵头人" prop="leaderUserName"></el-table-column>
         <el-table-column label="截至时间" prop="endTime"></el-table-column>
-        <el-table-column label="任务进度" prop="taskProgress"></el-table-column>
+        <el-table-column label="任务进度">
+          <template slot-scope="scope">
+            <el-progress :percentage="scope.row.taskProgress" :color="colors"></el-progress>
+          </template>
+        </el-table-column>
         <el-table-column label="任务状态" prop="taskStatus">
           <template slot-scope="scope">
             <span v-if="scope.row.leaderUserId === ''" style="color: #e76128"> 未审核 </span>
@@ -59,6 +63,28 @@ export default {
   name: 'MyTask',
   data () {
     return {
+      colors: [
+        {
+          color: '#f56c6c',
+          percentage: 20
+        },
+        {
+          color: '#e6a23c',
+          percentage: 40
+        },
+        {
+          color: '#5cb87a',
+          percentage: 60
+        },
+        {
+          color: '#1989fa',
+          percentage: 80
+        },
+        {
+          color: '#6f7ad3',
+          percentage: 100
+        }
+      ],
       dialogVisibleStatus: true,
       // 我的任务列表查询条件
       queryInfo: {

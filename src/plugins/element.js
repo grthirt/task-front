@@ -31,7 +31,9 @@ import {
   Tabs,
   TabPane,
   Link,
-  Slider
+  Slider,
+  Badge,
+  Progress
 } from 'element-ui'
 
 Vue.use(Button)
@@ -64,6 +66,8 @@ Vue.use(Tabs)
 Vue.use(TabPane)
 Vue.use(Link)
 Vue.use(Slider)
+Vue.use(Badge)
+Vue.use(Progress)
 Vue.prototype.$message = Message
 Vue.prototype.$confirm = MessageBox.confirm
 Vue.prototype.$messageBox = MessageBox

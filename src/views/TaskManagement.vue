@@ -11,12 +11,13 @@
       <el-row :gutter="20">
         <el-col :span="7">
           <el-input placeholder="请输入任务名称" class="input-with-select" v-model="queryInfo.taskName" clearable
-                    @clear="listTaskManagement">
+                    @clear="listTaskManagement" @input="listTaskManagement">
             <el-button slot="append" icon="el-icon-search" @click="listTaskManagement"></el-button>
           </el-input>
         </el-col>
         <el-col :span.camel="4">
           <el-button type="primary" @click="dialogVisibleChange">新建任务</el-button>
+          <el-button type="primary">任务委托</el-button>
         </el-col>
       </el-row>
       <SaveNewTask></SaveNewTask>
@@ -29,7 +30,11 @@
         <el-table-column label="牵头部门" prop="leaderDepartmentName"></el-table-column>
         <el-table-column label="牵头人" prop="leaderUserName"></el-table-column>
         <el-table-column label="截至时间" prop="endTime"></el-table-column>
-        <el-table-column label="任务进度" prop="taskProgress"></el-table-column>
+        <el-table-column label="任务进度">
+          <template slot-scope="scope">
+            <el-progress :percentage="scope.row.taskProgress" :color="colors"></el-progress>
+          </template>
+        </el-table-column>
         <el-table-column label="任务状态" prop="taskStatus">
           <template slot-scope="scope">
             <span v-if="scope.row.taskProgress !== '100%'" style="color: #409EFF"> 进行中 </span>
@@ -157,7 +162,8 @@
             <el-row>
               <el-col :span="12">
                 <el-form-item label="任务进度" prop="taskDetail">
-                  <span>{{ taskManagementDetail.taskProgress }}</span>
+                  <el-progress :text-inside="true" :stroke-width="26"
+                               :percentage="taskManagementDetail.taskProgress" :color="colors"></el-progress>
                 </el-form-item>
               </el-col>
               <el-col :span="24">
@@ -222,6 +228,28 @@ export default {
   name: 'TaskManagement',
   data () {
     return {
+      colors: [
+        {
+          color: '#f56c6c',
+          percentage: 20
+        },
+        {
+          color: '#e6a23c',
+          percentage: 40
+        },
+        {
+          color: '#5cb87a',
+          percentage: 60
+        },
+        {
+          color: '#1989fa',
+          percentage: 80
+        },
+        {
+          color: '#6f7ad3',
+          percentage: 100
+        }
+      ],
       taskManagementDetail: {},
       editFormData: {},
       taskManagementDetailVisible: false,

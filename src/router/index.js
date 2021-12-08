@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-// import Login from '../components/Login'
 import Index from '../components/Index'
 import Home from '../components/Home'
 import TaskManagement from '../views/TaskManagement'
